@@ -1,5 +1,10 @@
 Revision history for Perl extension PHP::Perlinfo.
 
+
+0.04  Mon Jan 03 2005
+	- Added INFO_CREDITS option
+	- There will be major changes in the next version
+
 0.03  Tue Dec 28 2004
 	- Fixed Makefile
 
