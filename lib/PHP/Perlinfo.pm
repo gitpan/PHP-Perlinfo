@@ -11,7 +11,7 @@ require Exporter;
 @PHP::Perlinfo::EXPORT = qw(perlinfo);
 use vars '$VERSION';
 
-$VERSION = '0.06';
+$VERSION = '0.07';
 
 require PHP::Perlinfo::HTML; 
 use Config;
@@ -20,11 +20,53 @@ use File::Find;
 use File::Spec;
 use IO::Socket;
 use IO::Scalar;
-use POSIX qw(uname);
-my ($sysname, $nodename, $release, $version, $machine) = POSIX::uname();
+use File::Which;
+use Net::Domain qw(hostname);
+use POSIX;
+
+
+sub check_path {
+
+return which("$_[0]") if which("$_[0]");
+return "<i>not in path</i>";
+
+}
+
+sub mod_check {
+
+my $module = $_[0];	
+$module =~ s!::!/!g;
+$module = "$module.pm";
+
+my $mod_path;
+    foreach my $i (@INC)
+    {
+        if ( -f File::Spec->catfile($i, $module) )
+        {
+            $mod_path = $i;
+            last;
+        }
+    }
+return 1 if ($mod_path);
+return 0;
+}	
+
+sub cpan_link {
+
+my $module = "$_[0]";
+	
+my $mod_name = qq~ <a href="http://search.cpan.org/perldoc?$module" title="Click here to see $module on CPAN [Opens in a new window]" target="_blank">$module</a> ~; 
+
+return $mod_name;
+
+}
+
 
 sub perl_info_print_modules {
-    my ($totalfound, @modCount, %path); 
+    my ($totalfound, @modCount, %path, $isCore, $coreDir1, $coreDir2); 
+	$coreDir1 = File::Spec->canonpath($Config{installarchlib});
+	$coreDir2 = File::Spec->canonpath($Config{installprivlib});
+  
     @path{@INC} = ();
     for my $base (@INC) { 		  
 	find ( sub { 
@@ -36,7 +78,8 @@ sub perl_info_print_modules {
 
 	$module =~ s!^/+!!;
 	$module =~ s!/!::!g;
-	my $mod_name = qq~ <a href="http://search.cpan.org/search?module=$module" title="Click here to see $module on CPAN [Opens in a new window]" target="_blank">$module</a> ~; 
+
+	my $mod_name = cpan_link($module); 
 
 	# Get the version	
 	# Thieved from ExtUtils::MM_Unix 1.12603	    
@@ -67,11 +110,9 @@ sub perl_info_print_modules {
 }
 close MOD;
 $mod_version = "unknown" if !($mod_version) || ($mod_version !~ /^\d+(\.\d+)*$/);
-# Test to see if the mod is core... not 100% foolproof.. yes, i know this is ugly
-my $isCore;
-my $totMatches = scalar grep $File::Find::dir =~ /\Q$_/, 
-(File::Spec->canonpath($Config{installarchlib}),
-	File::Spec->canonpath($Config{installprivlib}));
+
+# Test to see if the mod is core... not 100% foolproof 
+my $totMatches = scalar grep File::Spec->rel2abs($File::Find::dir) =~ /\Q$_/, ($coreDir1, $coreDir2);
 ($totMatches) ? ($isCore = "yes") : ($isCore = "no");
 
 # we are done
@@ -586,6 +627,7 @@ END_OF_HTML
 		  perl_info_print_box_end();
 
 		  perl_info_print_table_start();
+ 		  my ($sysname, $nodename, $release, $version, $machine) = POSIX::uname();
 		  perl_info_print_table_row(2, "Currently running on", "$sysname $nodename $release $version $machine");
 		  perl_info_print_table_row(2, "Built for",  "$Config::Config{archname}");
 		  perl_info_print_table_row(2, "Build date",  "$Config::Config{cf_time}");
@@ -645,17 +687,48 @@ END_OF_HTML
 		  SECTION("Special Variables");
 		  perl_info_print_table_start();
 		  perl_info_print_table_header(2, "Variable", "Value");
-		  perl_info_print_table_row(2, '$REAL_USER_ID', $<);
-		  perl_info_print_table_row(2, '$REAL_GROUP_ID', $();
-		  perl_info_print_table_row(2, '$EFFECTIVE_GROUP_ID', $));
-		  perl_info_print_table_row(2, '$COMPILING', $^C);
-		  perl_info_print_table_row(2, '$DEBUGGING', $^D);
-		  perl_info_print_table_row(2, '$PERLDB', $^P);
-		  perl_info_print_table_row(2, '$EXECUTABLE_NAME', $^X);
-		  perl_info_print_table_row(2, '$PROGRAM_NAME', File::Spec->abs2rel($0));
-		  # perl_info_print_table_row(2, '@INC', "@{\@INC}");
+ 			perl_info_print_table_row(2, '$^H', $^H);
+ 			perl_info_print_table_row(2, '$^M', $^M);
+		  	perl_info_print_table_row(2, '$BASETIME', $^T);
+ 			perl_info_print_table_row(2, '$COMPILING', $^C);
+		  	perl_info_print_table_row(2, '$DEBUGGING', $^D);
+			perl_info_print_table_row(2, '$EFFECTIVE_GROUP_ID', $));
+		  	perl_info_print_table_row(2, '$EXECUTABLE_NAME', $^X);
+ 			perl_info_print_table_row(2, '$FORMAT_FORMFEED', $^L); 
+ 			perl_info_print_table_row(2, '$FORMAT_LINE_BREAK_CHARACTERS', $:);
+ 			perl_info_print_table_row(2, '$INPLACE_EDIT', $^I);
+ 			perl_info_print_table_row(2, '$INPUT_RECORD_SEPARATOR', $/);
+ 			perl_info_print_table_row(2, '$OUTPUT_FIELD_SEPARATOR', $\);
+			perl_info_print_table_row(2, '$PERLDB', $^P);
+ 			perl_info_print_table_row(2, '$PROCESS_ID', $$);
+  			perl_info_print_table_row(2, '$PROGRAM_NAME', File::Spec->abs2rel($0));
+			perl_info_print_table_row(2, '$REAL_GROUP_ID', $();
+		  	perl_info_print_table_row(2, '$REAL_USER_ID', $<);
+			#perl_info_print_table_row(2, '$SUBSCRIPT_SEPARATOR', $;);
+ 			perl_info_print_table_row(2, '$SYSTEM_FD_MAX', $^F);
 		  perl_info_print_table_end();
 
+ 		  SECTION("Bundled utilities");
+		  perl_info_print_table_start();
+		  perl_info_print_table_header(2, "Name", "Location");
+		  perl_info_print_table_row(2, cpan_link("perldoc"), check_path("perldoc"));
+		  perl_info_print_table_row(2, cpan_link("pod2html"), check_path("pod2html"));
+		  perl_info_print_table_row(2, cpan_link("pod2latex"), check_path("pod2latex"));
+		  perl_info_print_table_row(2, cpan_link("pod2man"), check_path("pod2man"));
+		  perl_info_print_table_row(2, cpan_link("pod2text"), check_path("pod2text"));
+		  perl_info_print_table_row(2, cpan_link("pod2usage"), check_path("pod2usage"));
+		  perl_info_print_table_row(2, cpan_link("podchecker"), check_path("podchecker"));
+		  perl_info_print_table_row(2, cpan_link("podselect"), check_path("podselect"));
+		  #perl_info_print_table_row(2, 'pwhich', check_path("pwhich"));
+		  perl_info_print_table_end();
+		  
+		  SECTION("Mail");
+		  perl_info_print_table_start();
+		  perl_info_print_table_row(2, 'SMTP', hostname());
+		  perl_info_print_table_row(2, 'sendmail_path', which("sendmail"));
+		  perl_info_print_table_end();
+
+		  
 		  SECTION("HTTP Headers Information");
 		  perl_info_print_table_start();
 		  perl_info_print_table_colspan_header(2, "HTTP Request Headers");
@@ -676,6 +749,7 @@ END_OF_HTML
 			# perl_info_print_table_row(2, 'Content-Type', $ENV{'HTTP_KEEP_ALIVE'});
 	  	}
 		  perl_info_print_table_end();
+
 		  
 	  }		  
 	   
@@ -695,7 +769,48 @@ END_OF_HTML
 
 	  if  ($flag =~ /INFO_ALL|INFO_MODULES/) {
 
-		  SECTION("Perl Modules");
+		
+		  #SECTION("ftp");
+		  #perl_info_print_table_start();
+		  #perl_info_print_table_row(2, "FTP support", "enabled with Net::FTP");
+		  #perl_info_print_table_end();
+
+ 		  SECTION("mysql");
+		  perl_info_print_table_start();
+		  perl_info_print_table_header(2, "MySQL Support", "installed");
+		  if (mod_check("DBI")) {
+		  perl_info_print_table_row(2, "@{[cpan_link('DBI')]} - Database independent interface", "yes");
+		  }
+		  else {
+		  perl_info_print_table_row(2, "@{[cpan_link('DBI')]} - Database independent interface", "no");
+	  	  }
+		  if (mod_check("DBD::mysql")) {
+		  perl_info_print_table_row(2, "@{[cpan_link('DBD::mysql')]} - MySQL driver for the DBI", "yes");  
+		  } 
+		  else {
+		  perl_info_print_table_row(2, "@{[cpan_link('DBD::mysql')]} - MySQL driver for the DBI", "no");
+	          }
+		  perl_info_print_table_end();
+
+		  #SECTION("regex");
+		  #perl_info_print_table_start();
+		  #perl_info_print_table_row(2, "Regular Expressions support", "Built-in engine enabled");
+		  #perl_info_print_table_row(2, "Regular Expressions, re pragma", "present");
+		  #perl_info_print_table_end();
+
+		  #SECTION("wddx");
+		  #perl_info_print_table_start();
+		  #perl_info_print_table_header(2, "WDDX Support", "present");
+		  #perl_info_print_table_row(2, "WDDX module", "present");
+		  #perl_info_print_table_end();
+
+		  #SECTION("sessions");
+		  #perl_info_print_table_start();
+		  #perl_info_print_table_row(2, "Apache::Sessions", "not present");
+		  #perl_info_print_table_row(2, "CGI::Sessions", "not present");
+		  #perl_info_print_table_end();
+		  
+		  SECTION("All modules & pragmas");
 		  perl_info_print_table_start();
 		  perl_info_print_table_header(4, "Module name", "Version", "Core", "Location");
 		  perl_info_print_modules();
@@ -864,7 +979,7 @@ L<http://www.php.net/manual/en/function.phpinfo.php>
 
 =head1 AUTHOR
 
-Mike Accardo <mikeaccardo@yahoo.com>
+Mike Accardo <mikeaccardo@yahoo.com> Suggestions and comments welcomed.
 
 =head1 COPYRIGHT
 

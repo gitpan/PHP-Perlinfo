@@ -222,7 +222,7 @@ sub  perl_info_print_table_colspan_header {
 		  );
 
 		  my $row_element = $_[$i+1];
-		  if ((not defined ($row_element)) || ($row_element !~ /[^\s+]/)) {
+		  if ((not defined ($row_element)) || ($row_element !~ /\S/)) {
 			  print "<i>no value</i>";
 		  } else {
 			  my $elem_esc = $row_element;

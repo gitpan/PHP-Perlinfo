@@ -1,6 +1,12 @@
 Revision history for Perl extension PHP::Perlinfo.
 
 
+0.07 Thur Feb 10 2005
+	- Fixed bug in INFO_MODULES section that showed all modules as not core
+	- Added bundled utilities, mail, and mysql sections
+	- Added more variables to the special variables section
+	- File::Which is now a dependency
+
 0.06  Wed Feb 02 2005
 	- Fixed Makefile again! Doh!
 	- Added info_license method
