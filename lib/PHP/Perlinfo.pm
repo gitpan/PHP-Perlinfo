@@ -1,17 +1,21 @@
 # ===============================================
-# Thanks to the PHP authors for making this possible.
-#
 # The original C version in the PHP source: 
 # php-source\ext\standard\info.c
 # ================================================
 
 package PHP::Perlinfo;
+use strict;
+
 require Exporter;
 @PHP::Perlinfo::ISA    = qw(Exporter);
 @PHP::Perlinfo::EXPORT = qw(perlinfo);
-$VERSION = '0.04'; 
+use vars '$VERSION';
 
-use Config; 
+$VERSION = '0.05';
+
+require PHP::Perlinfo::HTML; 
+use Config;
+use CGI::Carp 'fatalsToBrowser';
 use File::Find;
 use File::Spec;
 use IO::Socket;
@@ -19,32 +23,25 @@ use IO::Scalar;
 use POSIX qw(uname);
 my ($sysname, $nodename, $release, $version, $machine) = POSIX::uname();
 
-# get current year
-sub year {
-	my ($y) = (localtime)[5];
-	my $year = sprintf '%d', $y+1900;
-	return "$year";
-}
-
-sub modules {
-
+sub perl_info_print_modules {
+    my ($totalfound, @modCount, %path); 
+    @path{@INC} = ();
+    for my $base (@INC) { 		  
+	find ( sub { 
+	my $startdir = "$File::Find::topdir";
 	$File::Find::prune = 1, return if
-	exists $path{$File::Find::dir} and $File::Find::dir ne $base;
-	my $module = substr $File::Find::name, length $base;
+	exists $path{$File::Find::dir} and $File::Find::dir ne $startdir;
+	my $module = substr $File::Find::name, length $startdir;
 	return unless $module =~ s/\.pm$//;
-
 
 	$module =~ s!^/+!!;
 	$module =~ s!/!::!g;
-
 	my $mod_name = qq~ <a href="http://search.cpan.org/search?module=$module" title="Click here to see $module on CPAN [Opens in a new window]" target="_blank">$module</a> ~; 
 
 	# Get the version	
 	# Thieved from ExtUtils::MM_Unix 1.12603	    
-
-
-	$parsefile =  File::Spec->rel2abs($File::Find::name);
-	open(MOD, $parsefile) or die $!;
+	
+	open(MOD, $_) or die "$_: $!";
 	my $inpod = 0;
 	my $mod_version;
 	while (<MOD>) {
@@ -64,16 +61,15 @@ sub modules {
 	};
 	local $^W = 0;
 	$mod_version = eval($eval);
-	warn "Could not eval '$eval' in $parsefile: $@" if $@;
+	warn "Could not eval '$eval' in $_: $@" if $@;
 	$mod_version = "undef" unless defined $mod_version;
 	last;
 }
 close MOD;
-$mod_version = "unknown" if ($mod_version !~ /^\d+(\.\d+)*$/);
-
+$mod_version = "unknown" if !($mod_version) || ($mod_version !~ /^\d+(\.\d+)*$/);
 # Test to see if the mod is core... not 100% foolproof.. yes, i know this is ugly
-my $chSlashes = File::Spec->rel2abs($File::Find::dir);
-my $totMatches = scalar grep $chSlashes =~ /\Q$_/, 
+my $isCore;
+my $totMatches = scalar grep $File::Find::dir =~ /\Q$_/, 
 (File::Spec->canonpath($Config{installarchlib}),
 	File::Spec->canonpath($Config{installprivlib}));
 ($totMatches) ? ($isCore = "yes") : ($isCore = "no");
@@ -81,33 +77,29 @@ my $totMatches = scalar grep $chSlashes =~ /\Q$_/,
 # we are done
 perl_info_print_table_row(4, "$mod_name", "$mod_version", "$isCore", "$File::Find::dir");
 
-return $totalMods++;
-
-  }
-
-  sub perl_info_print_modules {
-
-	  @path{@INC} = ();
-	  for $base (@INC) { 
-		  find(\&modules, $base); 
-		  push(@modCount, $totalMods);
-		  $totalMods = 0;
+$totalfound++;  
+			   }, $base); 
+		  push(@modCount, $totalfound);
+		  $totalfound = 0;
 	  }
 
-  }
+	  perl_info_print_table_end();
+         
+	  perl_info_print_table_start();
+	  perl_info_print_table_header(2, "Directories", "Number of modules");
 
-  sub perl_info_print_modules_amount {
-
-	  my $amountIndex = 0;	
-	  for $base (@INC) {
-
+	  my ($amountIndex, $totalAmount) = 0;	
+	  for my $base (@INC) {
 		  perl_info_print_table_row(2, "$base", "$modCount[$amountIndex]");	
 		  $amountIndex++;
 	  }	
+
 	  perl_info_print_table_end();
 	  perl_info_print_table_start(); 
 	  $totalAmount += $_ for (@modCount); 
 	  perl_info_print_table_row(2, "Total modules", "$totalAmount");
+	  perl_info_print_table_end();
+	  
 	  perl_info_print_table_end();
   }
 
@@ -115,7 +107,7 @@ return $totalMods++;
   sub perl_print_gpcse_array  {
 	  my($name) = @_;
 	  my ($gpcse_name, $gpcse_value);
-	  foreach $key (sort(keys %ENV))
+	  foreach my $key (sort(keys %ENV))
 	  {
 		  $gpcse_name = "$name" . '["' . "$key" . '"]';
 		  if ($ENV{$key}) {
@@ -130,7 +122,7 @@ return $totalMods++;
   sub perl_info_print_credits {
 	 
 	        print "<h1>Perl Credits</h1>\n"; 
-		# The Keepers of the Pumpkin    
+		# The Holy Keepers of the Pumpkin    
    	        perl_info_print_table_start();
 		perl_info_print_table_header(1, "Perl 5 Pumpkings");
 		perl_info_print_table_row(1, "Larry Wall, Andy Dougherty, Tom Christiansen, Charles Bailey, Nick Ing-Simmons, Chip Salzenberg, Tim Bunce, Malcolm Beattie, Gurusamy Sarathy, Graham Barr, Jarkko Hietaniemi ");
@@ -504,86 +496,6 @@ return $totalMods++;
 
   }
 
- sub  perl_info_print_table_colspan_header {
-  
-   	 printf("<tr class=\"h\"><th colspan=\"%d\">%s</th></tr>\n", $_[0], $_[1]);  
-
-  }
-
-  sub perl_info_print_table_row {
-
-	  my($num_cols) = $_[0];
-	  print "<tr>";
-
-	  for ($i=0; $i<$num_cols; $i++) {
-
-		  printf("<td class=\"%s\">",
-			  ($i==0 ? "e" : "v" )
-		  );
-
-		  my $row_element = $_[$i+1];
-		  if ((not defined ($row_element)) || ($row_element !~ /[^\s+]/)) {
-			  print "<i>no value</i>";
-		  } else {
-			  my $elem_esc = $row_element;
-			  print "$elem_esc";
-
-		  }
-
-		  print " </td>";
-
-	  }
-
-	  print "</tr>\n";
-  }
-
-  sub perl_info_print_table_start {
-
-	  print "<table border=\"0\" cellpadding=\"3\" width=\"600\">\n";
-
-  }
-  sub perl_info_print_table_end {
-
-	  print "</table><br />\n";
-
-  }
-  sub perl_info_print_box_start {
-
-	  perl_info_print_table_start();	
-	  if ($_[0] == 1) {
-		  print "<tr class=\"h\"><td>\n";
-	  } 
-	  else {
-		  print "<tr class=\"v\"><td>\n";
-	  }
-  }
-
-
-  sub perl_info_print_box_end {
-	  print "</td></tr>\n";
-	  perl_info_print_table_end();
-  }
-  sub perl_info_print_hr {
-	  print "<hr />\n";
-
-  }
-  sub perl_info_print_table_header {
-
-	  my($num_cols) = $_[0];
-	  print "<tr class=\"h\">";
-
-	  my $i;		
-	  for ($i=0; $i<$num_cols; $i++) {
-		  my $row_element = $_[$i+1];
-		  $row_element = " " if (!$row_element);
-		  print "<th>";
-		  print $row_element;
-		  print "</th>";
-	  }
-
-	  print "</tr>\n";
-  }
-
   sub PERL_VERSION {
 	  my $version;
           if ($] >= 5.006) {
@@ -606,13 +518,6 @@ return $totalMods++;
 
   }
 
-  sub SECTION  {
-
-	  print "<h2>" . $_[0] . "</h2>\n"; 
-
-  }
-
-
   sub perl_info_print_license {
 
 	  print <<'END_OF_HTML';
@@ -631,32 +536,6 @@ END_OF_HTML
 
   }
 
-
-  sub perl_info_print_css{
-
-	  print <<'END_OF_HTML';
-body {background-color: #ffffff; color: #000000;}
-body, td, th, h1, h2 {font-family: sans-serif;}
-pre {margin: 0px; font-family: monospace;}
-a:link {color: #000099; text-decoration: none; background-color: #ffffff;}
-a:hover {text-decoration: underline;}
-table {border-collapse: collapse;}
-.center {text-align: center;}
-.center table { margin-left: auto; margin-right: auto; text-align: left;}
-.center th { text-align: center !important; }
-td, th { border: 1px solid #000000; font-size: 75%; vertical-align: baseline;}
-h1 {font-size: 150%;}
-h2 {font-size: 125%;}
-.p {text-align: left;}
-.e {background-color: #ccccff; font-weight: bold; color: #000000;}
-.h {background-color: #9999cc; font-weight: bold; color: #000000;}
-.v {background-color: #cccccc; color: #000000;}
-i {color: #666666; background-color: #cccccc;}
-img {float: right; border: 0px;}
-hr {width: 600px; background-color: #cccccc; border: 0px; height: 1px; color: #000000;}
-END_OF_HTML
-
-  }
 
   sub perl_info_print_script {
    	print "<SCRIPT LANGUAGE=\"JavaScript\">\n<!--\n function showcredits () {\n";
@@ -686,23 +565,7 @@ END_OF_HTML
 END_OF_HTML
 
   } 
-  sub perl_info_print_style {
-	  print "<style type=\"text/css\"><!--\n";
-	  perl_info_print_css();
-	  print "//--></style>\n";
-  }
-
-
-  sub perl_info_print_htmlhead {
-	  print "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"DTD/xhtml1-transitional.dtd\">\n";
-	  print "<html>";
-	  print "<head>\n";
-	  perl_info_print_style();
-	  print "<title>perlinfo()</title>";
-	  print "</head>\n";
-	  print "<body><div class=\"center\">\n";
-  }
-
+  
   sub perl_print_info {
 
 	  my ($flag) = @_;
@@ -750,12 +613,12 @@ END_OF_HTML
 
 		  if ($connected) {
 		  	print "<a href=\"http://www.perl.com/\"><img border=\"0\" src=\"http://perl.oreilly.com/images/perl/powered_by_perl.gif\" alt=\"Perl logo\" title=\"Perl Logo\" /></a>";
-		  	print "This is perl, v$Config::Config{version} built for $Config::Config{archname}<br />Copyright (c) 1987-@{[ &year ]}, Larry Wall";
+		  	print "This is perl, v$Config::Config{version} built for $Config::Config{archname}<br />Copyright (c) 1987-@{[ sprintf '%d', (localtime)[5]+1900]}, Larry Wall";
 		  	print "</td></tr></table>";
 		  	print "<font size=\"1\">The use of a camel image in association with Perl is a trademark of <a href=\"http://www.oreilly.com\">O'Reilly Media, Inc.</a> Used with permission.</font><p />";
 		  }
 		  else {
-		  	print "This is perl, v$Config::Config{version} built for $Config::Config{archname}<br />Copyright (c) 1987-@{[ &year ]}, Larry Wall";
+		  	print "This is perl, v$Config::Config{version} built for $Config::Config{archname}<br />Copyright (c) 1987-@{[ sprintf '%d', (localtime)[5]+1900]}, Larry Wall";
 			perl_info_print_box_end();
 		  }
 		}
@@ -776,15 +639,52 @@ END_OF_HTML
 		  </h1>
 END_OF_HTML
 		  perl_info_print_hr();
- 		}		  
-	   
-           perl_info_print_credits() if ($flag =~ /INFO_GENERAL/);
-		
-	  if  ($flag =~ /INFO_ALL|INFO_VARIABLES/) {
-		  SECTION("Perl Variables");
+
+
+                  print "<h1>Configuration</h1>\n";
+		  SECTION("Special Variables");
 		  perl_info_print_table_start();
 		  perl_info_print_table_header(2, "Variable", "Value");
-		  perl_info_print_table_row(2, "Perl_SELF", $0);
+		  perl_info_print_table_row(2, '$REAL_USER_ID', $<);
+		  perl_info_print_table_row(2, '$REAL_GROUP_ID', $();
+		  perl_info_print_table_row(2, '$EFFECTIVE_GROUP_ID', $));
+		  perl_info_print_table_row(2, '$COMPILING', $^C);
+		  perl_info_print_table_row(2, '$DEBUGGING', $^D);
+		  perl_info_print_table_row(2, '$PERLDB', $^P);
+		  perl_info_print_table_row(2, '$EXECUTABLE_NAME', $^X);
+		  perl_info_print_table_row(2, '$PROGRAM_NAME', File::Spec->abs2rel($0));
+		  # perl_info_print_table_row(2, '@INC', "@{\@INC}");
+		  perl_info_print_table_end();
+
+		  SECTION("HTTP Headers Information");
+		  perl_info_print_table_start();
+		  perl_info_print_table_colspan_header(2, "HTTP Request Headers");
+		  if  (defined($ENV{'SERVER_SOFTWARE'})) {
+		  	perl_info_print_table_row(2, 'HTTP Request', "$ENV{'REQUEST_METHOD'} @{[File::Spec->abs2rel($0)]} $ENV{'SERVER_PROTOCOL'}");
+		  	perl_info_print_table_row(2, 'Host', $ENV{'HTTP_HOST'});
+		  	perl_info_print_table_row(2, 'User-Agent', $ENV{'HTTP_USER_AGENT'});
+		  	perl_info_print_table_row(2, 'Accept', $ENV{'HTTP_ACCEPT_ENCODING'});
+		  	perl_info_print_table_row(2, 'Accept-Language', $ENV{'HTTP_ACCEPT_LANGUAGE'});
+		  	perl_info_print_table_row(2, 'Accept-Charset', $ENV{'HTTP_ACCEPT_CHARSET'});
+		  	perl_info_print_table_row(2, 'Keep-Alive', $ENV{'HTTP_KEEP_ALIVE'});
+		  	perl_info_print_table_row(2, 'Connection', $ENV{'HTTP_CONNECTION'});
+			# perl_info_print_table_colspan_header(2, "HTTP Response Headers");
+			# perl_info_print_table_row(2, 'X-Powered-By', $ENV{'HTTP_KEEP_ALIVE'});
+			# perl_info_print_table_row(2, 'Keep-Alive', $ENV{'HTTP_KEEP_ALIVE'});
+			# perl_info_print_table_row(2, 'Connection', $ENV{'HTTP_KEEP_ALIVE'});
+			# perl_info_print_table_row(2, 'Transfer-Encoding', $ENV{'HTTP_KEEP_ALIVE'});
+			# perl_info_print_table_row(2, 'Content-Type', $ENV{'HTTP_KEEP_ALIVE'});
+	  	}
+		  perl_info_print_table_end();
+		  
+	  }		  
+	   
+		
+	  if  ($flag =~ /INFO_ALL|INFO_VARIABLES/) {
+		  SECTION("Environment Variables");
+		  perl_info_print_table_start();
+		  perl_info_print_table_header(2, "Variable", "Value");
+		  # perl_info_print_table_row(2, "Perl_SELF", $0);
 		  if (defined($ENV{'SERVER_SOFTWARE'})) {
 			  perl_print_gpcse_array("_SERVER");
 		  } else {
@@ -799,13 +699,7 @@ END_OF_HTML
 		  perl_info_print_table_start();
 		  perl_info_print_table_header(4, "Module name", "Version", "Core", "Location");
 		  perl_info_print_modules();
-		  perl_info_print_table_end();
 
-		  perl_info_print_table_start();
-
-		  perl_info_print_table_header(2, "Directories", "Number of modules");
-		  perl_info_print_modules_amount();
-		  perl_info_print_table_end();
 	  }
 
 	  if  ($flag =~ /INFO_ALL|INFO_LICENSE/) {
@@ -817,15 +711,16 @@ END_OF_HTML
 	  print "</div></body></html>";
   }
 # Output a page of useful information about Perl and the current request 
+
   sub perlinfo { 
 
-	  my ( $INFO ) = @_;
-
-	  $INFO = "INFO_ALL" unless $INFO; 
-
+	  my ( $INFO ) = @_; 
+	  $INFO = "INFO_ALL" if (($INFO eq "") || ($INFO !~ /[^\s+]/));
+	  if (($INFO !~ /INFO_ALL|INFO_GENERAL|INFO_CREDITS|INFO_VARIABLES|INFO_MODULES|INFO_LICENSE/) || @_ > 1) 
+	  { die("@_: Invalid perlinfo() <-- parameter"); }
 	  # Andale!  Andale!  Yee-Hah! 
 	  print "Content-type: text/html\n\n" if (defined($ENV{'SERVER_SOFTWARE'}));
-	  perl_print_info($INFO);
+	  perl_print_info($INFO); exit;
 
   }
 1;
@@ -844,19 +739,18 @@ PHP::Perlinfo - Clone of PHP's phpinfo function for Perl
 
 =head1 DESCRIPTION
 
-This module outputs a large amount of information (only in HTML in this release) about the current state of Perl. So far, this includes information about Perl compilation options, the Perl version, server information and environment, OS version information, Perl modules, and the Perl License.  
+This module outputs a large amount of information (only in HTML in this release) about the current state of Perl. So far, this includes information about Perl compilation options, the Perl version, server information and environment, HTTP headers, OS version information, Perl modules, and the Perl License. 
+
+Since the module outputs HTML, you may want to use it in a CGI script, but you do not have to. Of course, some information, like HTTP headers, would not be available if you use the module at the command-line. 
 
 It is based on PHP's phpinfo function. Like other clones of PHP functions on CPAN, perlinfo attempts to mimic the PHP function is as many ways as possible. But, of course, there are some differences in the Perl version. These differences will be logged in future revisions.
 
 PHP's phpinfo function is usually one of the first things a new PHP programmer learns. It is a very useful function for debugging and checking configuration settings. I expect that many users of this module will already know PHP's phpinfo. To familiarize yourself with phpinfo, you can google "phpinfo" and see the output for phpinfo in one of the many results. (I rather not provide a link that can go bad with the passage of time.)
 
-You can also read the description of the original PHP version:
-
-L<http://www.php.net/manual/en/function.phpinfo.php>
 
 =head1 OPTIONS
 
-There are 6 options. More to come.
+There are 6 options to pass to the perlinfo funtion. All of these options are also object methods. The key difference is their case: Captilize the option name when passing it to the function and use only lower-case letters when using the object-oriented approach.
 
 =over
 
@@ -880,15 +774,41 @@ Shows all predefined variables from EGPCS (Environment, GET, POST, Cookie, Serve
 
 Shows the credits for Perl, listing the Perl pumpkings, developers, module authors, etc. 
 
-Note: This is equivalent to the default output of PHP's phpcredits function. Whereas PHP puts the credits information in a separate function, I have decided to include it in the info function for Perl.    
-
 =item INFO_ALL
 
 Shows all of the above. This is the default value.
 
 =back
 
+=head1 OBJECT METHODS
+
+These object methods allow you to change the HTML CSS settings to achieve a stylish effect. You must pass them a parameter or your program will die. Please see your favorite HTML guide for acceptable CSS values. Refer to the HTML source code of perlinfo for the defaults.
+
+Method name/Corresponding CSS element
+
+ bg_image 		/ background_image
+ bg_position 		/ background_position
+ bg_repeat 		/ background_repeat
+ bg_attribute 		/ background_attribute 
+ bg_color 		/ background_color
+ ft_family 		/ font_familty 
+ ft_color 		/ font_color
+ lk_color 		/ link color
+ lk_decoration 		/ link text-decoration  
+ lk_bgcolor 		/ link background-color 
+ lk_hvdecoration 	/ link hover text-decoration 
+ header_bgcolor 	/ table header background-color 
+ header_ftcolor 	/ table header font color
+ leftcol_bgcolor	/ background-color of leftmost table cell  
+ leftcol_ftcolor 	/ font color of left table cell
+ rightcol_bgcolor	/ background-color of right table cell  
+ rightcol_ftcolor	/ font color of right table cell
+
+Remember that there are more methods (the info options listed above). 
+
 =head1 EXAMPLES
+
+Function-oriented style:
 
 	# Show all information, defaults to INFO_ALL
 	perlinfo();
@@ -896,15 +816,51 @@ Shows all of the above. This is the default value.
 	# Show only module information
 	perlinfo(INFO_MODULES);
 
-Other things you could try: email yourself the results. This is handy in debug situations or if you want to keep an eye on something. To change stylesheet settings you could tie a variable to STDOUT, put the output into that variable and do a regular expression substitution.   
+Object-oriented style:
+
+	$p = new PHP::Perlinfo;
+	$p->bg_color("#eae5c8");
+	$p->info_all;
+
+	# You can also set the CSS values in the constructor!
+    	$p = PHP::Perlinfo->new(
+		bg_image  => 'http://www.tropic.org.uk/~edward/ctrip/images/camel.gif',
+		bg_repeat => 'yes-repeat'
+	);
+	$p->info_all;
+
+More examples . . .
+
+	# This is wrong (no capitals!)
+	$p->INFO_CREDITS;
+
+	# But this is correct
+	perlinfo(INFO_CREDITS);
+	
+	# Ditto
+	$p->info_credits;
 
 =head1 NOTES
 
-Every effort has been made to ensure compatibility with older versions of Perl 5.   
+This module is still in the early stages of development. Many new additions and changes are planned. 
 
-This is an early release of this module and it lacks many important features in the PHP version. These 
+Perlinfo lacks many important features that are in the PHP version. These 
 features are not hard to implement but finding the time to add them is. Help wanted! Please 
 email me if you want to help out. Thanks.
+
+=head1 SEE ALSO
+
+L<Config>. You can also use "perl -V" to see a configuration summary.
+
+=begin html
+
+<a href="http://www.scriptsolutions.com/programs/free/perldiver/">Perl Diver</a> and <a href="http://sniptools.com/perldigger">Perl Digger</a> are free CGI scripts that offer similar information.  
+
+=end html
+
+You can also read the description of the original PHP version:
+
+L<http://www.php.net/manual/en/function.phpinfo.php>
 
 =head1 AUTHOR
 
@@ -912,8 +868,9 @@ Mike Accardo <mikeaccardo@yahoo.com>
 
 =head1 COPYRIGHT
 
-   Copyright (c) 2004, Mike Accardo. All Rights Reserved.
+   Copyright (c) 2005, Mike Accardo. All Rights Reserved.
  This module is free software. It may be used, redistributed
 and/or modified under the terms of the Perl Artistic License.
 
 =cut
+

@@ -5,11 +5,21 @@
 
 # change 'tests => 1' to 'tests => last_test_to_print';
 
-use Test::More tests => 1;
-BEGIN { use_ok('PHP::Perlinfo') };
-
+use Test;
+BEGIN { plan tests => 1 };
+use PHP::Perlinfo;
+use IO::Scalar;
 #########################
 
-# Insert your test code below, the Test::More module is use()ed here so read
-# its man page ( perldoc Test::More ) for help writing this test script.
+# Difficult to conduct testing here due to nature of perlinfo
 
+ok ( test_01() );
+
+sub test_01 {
+
+$p = new PHP::Perlinfo;
+$p->bg_image("yukiko.jpg");
+
+return 0 if ($@);
+return 1;
+}

@@ -4,4 +4,5 @@ MANIFEST
 README
 t/PHP-Perlinfo.t
 lib/PHP/Perlinfo.pm
+lib/PHP/Perlinfo/HTML.pm
 META.yml                                 Module meta-data (added by MakeMaker)
