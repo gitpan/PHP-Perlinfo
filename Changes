@@ -1,5 +1,8 @@
 Revision history for Perl extension PHP::Perlinfo.
 
+0.03  Tue Dec 28 2004
+	- Fixed Makefile
+
 0.02  Sun Dec 26 2004 
 	- Added check for HTTP header. 
 	- Added IO::Socket to check if Perl images are downloadable. 

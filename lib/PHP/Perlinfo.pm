@@ -9,7 +9,7 @@ package PHP::Perlinfo;
 require Exporter;
 @PHP::Perlinfo::ISA    = qw(Exporter);
 @PHP::Perlinfo::EXPORT = qw(perlinfo);
-$VERSION = '0.02';
+$VERSION = '0.03';
 
 use Config; 
 use File::Find;
@@ -438,7 +438,7 @@ There are only 5 options in this initial release. All 5 are copied from phpinfo.
 
 =over
 
-=item INF0_GENERAL
+=item INFO_GENERAL
 
 The configuration line, build date, Web Server, System and more.
 
