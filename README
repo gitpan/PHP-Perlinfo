@@ -1,0 +1,17 @@
+PHP-Perlinfo version 0.01
+=========================
+
+NAME
+PHP::Perlinfo - Clone of PHP's phpinfo function for Perl
+
+DESCRIPTION
+This module outputs a large amount of information (only in HTML in this release about the current state of Perl. So far, this includes information about Perl compilation options, the Perl version, server information and environment, OS version information, Perl modules, and the Perl License.  
+
+INSTALLATION
+It's all pure Perl, so just put the .pm file in its appropriate local Perl subdirectory
+
+COPYRIGHT AND LICENCE
+Copyright (C) 2004 Mike Accardo <mikeaccardo@yahoo.com>
+
+This library is free software; you can redistribute it and/or modify it under the same terms as Perl itself. 
+

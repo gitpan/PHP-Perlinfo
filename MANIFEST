@@ -1,0 +1,7 @@
+Changes
+Makefile.PL
+MANIFEST
+README
+t/PHP-Perlinfo.t
+lib/PHP/Perlinfo.pm
+META.yml                                 Module meta-data (added by MakeMaker)
