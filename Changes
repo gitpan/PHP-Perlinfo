@@ -1,6 +1,10 @@
 Revision history for Perl extension PHP::Perlinfo.
 
 
+0.06  Wed Feb 02 2005
+	- Fixed Makefile again! Doh!
+	- Added info_license method
+	- Updated POD
 0.05    
 	- To be more like its PHP counterpart, INFO_GENERAL no longer includes INFO_CREDIT.  
 	- Added CGI::Carp 'fatalsToBrowser' to redirect fatal errors to the browser

@@ -11,7 +11,7 @@ require Exporter;
 @PHP::Perlinfo::EXPORT = qw(perlinfo);
 use vars '$VERSION';
 
-$VERSION = '0.05';
+$VERSION = '0.06';
 
 require PHP::Perlinfo::HTML; 
 use Config;
@@ -852,11 +852,11 @@ email me if you want to help out. Thanks.
 
 L<Config>. You can also use "perl -V" to see a configuration summary.
 
-=begin html
+Perl Diver and Perl Digger are free CGI scripts that offer similar information.  
 
-<a href="http://www.scriptsolutions.com/programs/free/perldiver/">Perl Diver</a> and <a href="http://sniptools.com/perldigger">Perl Digger</a> are free CGI scripts that offer similar information.  
+Perl Diver:  L<http://www.scriptsolutions.com/programs/free/perldiver/>
 
-=end html
+Perl Digger: L<http://sniptools.com/perldigger>
 
 You can also read the description of the original PHP version:
 

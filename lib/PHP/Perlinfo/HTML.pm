@@ -36,6 +36,11 @@ sub info_variables {
 	die("$meth does not accept a parameter") if $_[1];
 	perlinfo(INFO_VARIABLES);    
 }
+sub info_license {
+	my $meth = (caller 0)[3];
+	die("$meth does not accept a parameter") if $_[1];
+	perlinfo(INFO_LICENSE);    
+}
 
 sub vomit {
 	my $meth = (caller 1)[3];
