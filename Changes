@@ -1,5 +1,10 @@
 Revision history for Perl extension PHP::Perlinfo.
 
+0.02  Sun Dec 26 2004 
+	- Added check for HTTP header. 
+	- Added IO::Socket to check if Perl images are downloadable. 
+	- Perl versions before 5.6 now supported. 
+
 0.01  Fri Dec 17 01:26:29 2004
 	- original version; created by h2xs 1.23 with options
 		-XAn PHP::Perlinfo

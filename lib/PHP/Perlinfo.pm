@@ -9,11 +9,12 @@ package PHP::Perlinfo;
 require Exporter;
 @PHP::Perlinfo::ISA    = qw(Exporter);
 @PHP::Perlinfo::EXPORT = qw(perlinfo);
-$VERSION = '0.01';
+$VERSION = '0.02';
 
 use Config; 
 use File::Find;
 use File::Spec;
+use IO::Socket;
 use POSIX qw(uname);
 my ($sysname, $nodename, $release, $version, $machine) = POSIX::uname();
 
@@ -200,12 +201,26 @@ return $totalMods++;
   }
 
   sub PERL_VERSION {
-# Need to fix this. Only works for versions >= 5.6
-	  my $version = sprintf "%vd", $^V;
+	  my $version;
+          if ($] >= 5.006) {
+	  $version = sprintf "%vd", $^V;
+          }
+	  else { # else time to update Perl!
+          $version = "$]";
+  	  }
 	  return $version;
-
   }
 
+  sub ORA {
+	  local($^W) = 0;
+	  my $sock = IO::Socket::INET->new(	PeerAddr  => 'perl.oreilly.com',  
+		  				PeerPort  => 80,
+						PeerProto => 'tcp',
+					        Timeout   => 5) || return 0;	 
+	  $sock->close;
+	  return 1;
+
+  }
 
   sub SECTION  {
 
@@ -285,9 +300,12 @@ END_OF_HTML
 
 	  if ($flag =~ /INFO_ALL|INFO_GENERAL/) {
 
+		  my $connected = ORA();
 		  perl_info_print_box_start(1);
+		  if ($connected) {
 		  print "<a href=\"http://www.perl.com/\"><img border=\"0\" src=\"";
 		  print "http://perl.oreilly.com/images/perl/sm_perl_id_313_wt.gif\" alt=\"Perl Logo\" title=\"Perl Logo\" /></a>";
+		  }
 		  printf("<h1 class=\"p\">Perl Version %s</h1>\n", PERL_VERSION());
 		  perl_info_print_box_end();
 
@@ -313,13 +331,20 @@ END_OF_HTML
 
 		  perl_info_print_table_end();
 
-# Powered by Perl
-# Need to check for net connection
+		# Powered by Perl
+		# Need to check for net connection
 		  perl_info_print_box_start(0);
-		  print "<a href=\"http://www.perl.com/\"><img border=\"0\" src=\"http://perl.oreilly.com/images/perl/powered_by_perl.gif\" alt=\"Perl logo\" title=\"Perl Logo\" /></a>";
-		  print "This is perl, v$Config::Config{version} built for $Config::Config{archname}<br />Copyright (c) 1987-@{[ &year ]}, Larry Wall";
-		  print "</td></tr></table>";
-		  print "<font size=\"1\">The use of a camel image in association with Perl is a trademark of <a href=\"http://www.oreilly.com\">O'Reilly Media, Inc.</a> Used with permission.</font><p />";
+
+		  if ($connected) {
+		  	print "<a href=\"http://www.perl.com/\"><img border=\"0\" src=\"http://perl.oreilly.com/images/perl/powered_by_perl.gif\" alt=\"Perl logo\" title=\"Perl Logo\" /></a>";
+		  	print "This is perl, v$Config::Config{version} built for $Config::Config{archname}<br />Copyright (c) 1987-@{[ &year ]}, Larry Wall";
+		  	print "</td></tr></table>";
+		  	print "<font size=\"1\">The use of a camel image in association with Perl is a trademark of <a href=\"http://www.oreilly.com\">O'Reilly Media, Inc.</a> Used with permission.</font><p />";
+		  }
+		  else {
+		  	print "This is perl, v$Config::Config{version} built for $Config::Config{archname}<br />Copyright (c) 1987-@{[ &year ]}, Larry Wall";
+			perl_info_print_box_end();
+		  }
 
 		  perl_info_print_hr();
 		  print "<h1><a href=\"http://search.cpan.org/src/NWCLARK/perl-5.8.6/AUTHORS\">";
@@ -373,11 +398,12 @@ END_OF_HTML
 	  $INFO = "INFO_ALL" unless $INFO; 
 
 	  # Andale!  Andale!  Yee-Hah! 
-	  print "Content-type: text/html\n\n";
+	  print "Content-type: text/html\n\n" if (defined($ENV{'SERVER_SOFTWARE'}));
 	  perl_print_info($INFO);
 
   }
 1;
+__END__
 =pod
 
 =head1 NAME
@@ -396,14 +422,13 @@ This module outputs a large amount of information (only in HTML in this release)
 
 It is based on PHP's phpinfo function. Like other clones of PHP functions on CPAN, Perlinfo attempts to mimic the PHP function is as many ways as possible. But, of course, there are some differences in the Perl version. These differences will be logged in future revisions.
 
-PHP's phpinfo function is usually one of the first things a new PHP programmer learns. It is 
-a very useful function for debugging and checking configuration settings. I expect that many users of this module will already know PHP's phpinfo. To familiarize yourself with phpinfo, you can google "phpinfo" and see the output for phpinfo in one of the many results. (I rather not provide a link that can go bad with the passage of time.)
+PHP's phpinfo function is usually one of the first things a new PHP programmer learns. It is a very useful function for debugging and checking configuration settings. I expect that many users of this module will already know PHP's phpinfo. To familiarize yourself with phpinfo, you can google "phpinfo" and see the output for phpinfo in one of the many results. (I rather not provide a link that can go bad with the passage of time.)
 
 =over 1
 
 You can also read the description of the original PHP version:
 
-=item http://www.php.net/manual/en/function.phpinfo.php
+=item L<http://www.php.net/manual/en/function.phpinfo.php>
 
 =back
 
@@ -443,11 +468,11 @@ Shows all of the above. This is the default value.
 	# Show only module information
 	perlinfo(INFO_MODULES);
 
-Other things you could try: email yourself the results. This is handy in debug situations or if you want to keep an eye on something. To change stylesheet settings you could tie a variable to STDOUT, put the output into that variable and do a regularexpression substitution.   
+Other things you could try: email yourself the results. This is handy in debug situations or if you want to keep an eye on something. To change stylesheet settings you could tie a variable to STDOUT, put the output into that variable and do a regular expression substitution.   
 
 =head1 NOTES
 
-This is the first release of this module and it lacks many important features in the PHP version. These 
+This is an early release of this module and it lacks many important features in the PHP version. These 
 features are not hard to implement but finding the time to add them is. Help wanted! Please 
 email me if you want to help out, too. Thanks.
 
@@ -462,5 +487,3 @@ Mike Accardo <mikeaccardo@yahoo.com>
 and/or modified under the terms of the Perl Artistic License.
 
 =cut
-
-
