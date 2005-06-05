@@ -132,6 +132,7 @@ sub rightcol_ftcolor {
 }
     
 # Default html vars 
+sub initialize_globals {
 
 $PHP::Perlinfo::bg_image = "";
 $PHP::Perlinfo::bg_position = "center";
@@ -152,6 +153,10 @@ $PHP::Perlinfo::leftcol_bgcolor = "#ccccff";
 $PHP::Perlinfo::leftcol_ftcolor = "#000000";
 $PHP::Perlinfo::rightcol_bgcolor = "#cccccc";
 $PHP::Perlinfo::rightcol_ftcolor = "#000000";
+
+#Make modperl happy
+1;
+}
 
 # HTML subs 
 
@@ -291,6 +296,50 @@ sub  perl_info_print_table_colspan_header {
 
   }
 
+ sub perl_info_print_perl_license {
 
- 
-1;
+	  print <<'END_OF_HTML';
+<p>
+This program is free software; you can redistribute it and/or modify it under the terms of
+either the Artistic License or the GNU General Public License, which may be found in the Perl 5 source kit.
+</p>
+
+<p>This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+</p>
+<p>
+Complete documentation for Perl, including FAQ lists, should be found on
+this system using `man perl' or `perldoc perl'.  If you have access to the
+Internet, point your browser at <a href="http://www.perl.org/">http://www.perl.org/</a>, the Perl directory. 
+END_OF_HTML
+
+  }
+
+ sub perl_info_print_script {
+   	print "<SCRIPT LANGUAGE=\"JavaScript\">\n<!--\n function showcredits () {\n";
+
+	my $str;
+ 	my $io = tie *STDOUT, 'IO::Scalar', \$str;
+        perl_info_print_htmlhead();
+	perl_info_print_credits();
+        print "<form><input type='submit' value='close window' onclick='window.close(); return false;'></form>"; 	
+        print "</div></body></html>";	
+	undef $io;
+	untie *STDOUT;
+	$str =~ s/"/\\"/g;
+	my @arr = split /\n/, $str;
+        print "contents=\"$arr[0]\";";
+	shift(@arr);
+        print "\ncontents+= \"$_\";" for @arr;
+        print <<'END_OF_HTML'; 
+    	
+        Win1=window.open( '' , 'Window1' , 'location=yes,toolbar=yes,menubar=yes,directories=yes,status=yes,resizable=yes,scrollbars=yes'); 
+	Win1.moveTo(0,0);
+        Win1.resizeTo(screen.width,screen.height);
+    	Win1.document.writeln(contents);
+	Win1.document.close();
+    	}	    
+   	//--></SCRIPT>
+END_OF_HTML
+
+  }   
+1;  

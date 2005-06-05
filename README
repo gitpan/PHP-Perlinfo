@@ -1,4 +1,4 @@
-PHP-Perlinfo version 0.07
+PHP-Perlinfo version 0.08
 =========================
 
 NAME
@@ -24,6 +24,8 @@ DEPENDENCIES
 This module requires these other modules and libraries:
 
 IO::Stringy
+File::Which
+App::Info
 
 COPYRIGHT AND LICENCE
 Copyright (C) 2005 Mike Accardo <mikeaccardo@yahoo.com>

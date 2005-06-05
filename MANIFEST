@@ -5,4 +5,10 @@ README
 t/PHP-Perlinfo.t
 lib/PHP/Perlinfo.pm
 lib/PHP/Perlinfo/HTML.pm
+lib/PHP/Perlinfo/Apache.pm
+lib/PHP/Perlinfo/License.pm
+lib/PHP/Perlinfo/Credits.pm
+lib/PHP/Perlinfo/Modules.pm
+lib/PHP/Perlinfo/Variables.pm
+lib/PHP/Perlinfo/General.pm
 META.yml                                 Module meta-data (added by MakeMaker)
