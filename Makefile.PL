@@ -1,7 +1,7 @@
 use ExtUtils::MakeMaker;
 WriteMakefile(
     NAME              => 'PHP::Perlinfo',
-    VERSION           => '0.08',
+    VERSION           => '0.09',
     PM 		      =>             
     			{
 			'lib/PHP/Perlinfo.pm'             => '$(INST_LIBDIR)/Perlinfo.pm',
@@ -12,15 +12,17 @@ WriteMakefile(
 			'lib/PHP/Perlinfo/General.pm'     => '$(INST_LIBDIR)/Perlinfo/General.pm',
 			'lib/PHP/Perlinfo/Modules.pm'     => '$(INST_LIBDIR)/Perlinfo/Modules.pm',
 			'lib/PHP/Perlinfo/Variables.pm'   => '$(INST_LIBDIR)/Perlinfo/Variables.pm',
+			'lib/PHP/Perlinfo/MySQL.pm'       => '$(INST_LIBDIR)/Perlinfo/MySQL.pm',
+			'lib/PHP/Perlinfo/Config.pm'       => '$(INST_LIBDIR)/Perlinfo/Config.pm',
+			
                       	},
 		      
-    PREREQ_PM	      => {	IO::Stringy => 0,
-    				File::Which => 0,
-				App::Info   => 0,
+    PREREQ_PM	      => {	IO::Stringy 	 => 0,
+    				File::Which 	 => 0,
+				App::Info   	 => 0,
+				Module::CoreList => 0,
 			 },
+
     AUTHOR   => 'Mike Accardo (mikeaccardo@yahoo.com)',
-
-
-
     
 );

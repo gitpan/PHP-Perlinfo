@@ -6,9 +6,11 @@
 package PHP::Perlinfo;
 
 use App::Info::HTTPD::Apache;
-use Config;
 use CGI::Carp 'fatalsToBrowser';
+use Config qw(%Config config_sh);
 use Net::Domain qw(hostname);
+use Carp qw(croak); 
+use Module::CoreList;
 use File::Find;
 use File::Spec;
 use IO::Socket;
@@ -19,16 +21,18 @@ use POSIX;
 require Exporter;
 require PHP::Perlinfo::HTML; 
 require PHP::Perlinfo::Credits;
+require PHP::Perlinfo::Config;
 require PHP::Perlinfo::General;
 require PHP::Perlinfo::Variables;
 require PHP::Perlinfo::Apache;
+require PHP::Perlinfo::MySQL;
 require PHP::Perlinfo::Modules;
 require PHP::Perlinfo::License;
 
 @PHP::Perlinfo::ISA    = qw(Exporter);
 @PHP::Perlinfo::EXPORT = qw(perlinfo);
 
-$VERSION = '0.08';
+$VERSION = '0.09';
 
 # This is for modperl
 initialize_globals();
@@ -39,6 +43,8 @@ initialize_globals();
 	  perl_info_print_htmlhead();
 	  perl_info_print_script()  if ($flag =~ /INFO_ALL/);
 	  perl_info_print_credits() if ($flag =~ /INFO_CREDITS/);
+	  perl_info_print_config() if ($flag =~ /INFO_CONFIG/);
+	  perl_info_print_httpd() if ($flag =~ /INFO_APACHE/);
 	  perl_info_print_general() if ($flag =~ /INFO_ALL|INFO_GENERAL/);
 	  perl_info_print_variables() if  ($flag =~ /INFO_ALL|INFO_VARIABLES/);
           perl_info_print_modules()   if  ($flag =~ /INFO_ALL|INFO_MODULES/);
@@ -51,8 +57,8 @@ initialize_globals();
   sub perlinfo { 
 	  
 	  my $INFO = (($_[0] eq "") || ($_[0] !~ /[^\s]+/)) ? "INFO_ALL" : $_[0];
-	  die("@_ is an invalid perlinfo() parameter")
-	  if (($INFO !~ /INFO_ALL|INFO_GENERAL|INFO_CREDITS|INFO_VARIABLES|INFO_APACHE|INFO_MODULES|INFO_LICENSE/) || @_ > 1); 
+	  croak "@_ is an invalid perlinfo() parameter"
+	  if (($INFO !~ /INFO_ALL|INFO_GENERAL|INFO_CREDITS|INFO_CONFIG|INFO_VARIABLES|INFO_APACHE|INFO_MODULES|INFO_LICENSE/) || @_ > 1); 
 	  # Andale!  Andale!  Yee-Hah! 
 	  print "Content-type: text/html\n\n" if (defined($ENV{'SERVER_SOFTWARE'}));
 	  perl_print_info($INFO); 
@@ -97,13 +103,21 @@ The configuration line, build date, Web Server, System and more.
 
 Perl license information.
 
+=item INFO_CONFIG
+
+All configuration 
+
+=item INFO_APACHE
+
+Apache HTTP server information.  
+
 =item INFO_MODULES 
 
-Local modules, their version number and more.
+All installed modules, their version number and more. The default is core modules.
 
 =item INFO_VARIABLES 
 
-Shows all predefined variables from EGPCS (Environment, GET, POST, Cookie, Server). This is not fully implemented yet.   
+Shows all predefined variables from EGPCS (Environment, GET, POST, Cookie, Server).    
 
 =item INFO_CREDITS
 
@@ -130,7 +144,6 @@ Method name/Corresponding CSS element
  ft_color 		/ font_color
  lk_color 		/ link color
  lk_decoration 		/ link text-decoration  
- 
  lk_bgcolor 		/ link background-color 
  lk_hvdecoration 	/ link hover text-decoration 
  header_bgcolor 	/ table header background-color 

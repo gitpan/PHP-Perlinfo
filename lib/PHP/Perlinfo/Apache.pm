@@ -1,3 +1,18 @@
+sub perl_info_print_httpd {
+
+	SECTION("apache");
+	perl_info_print_table_start();
+	perl_info_print_apache();
+	perl_info_print_table_end();
+
+	SECTION("Apache Environment");
+	perl_info_print_table_start();
+	perl_info_print_table_header(2, "Variable", "Value");
+	perl_info_print_apache_environment();
+	perl_info_print_table_end();
+
+}
+
 sub check_apache {
 
 	return 0 unless (defined($ENV{'SERVER_SOFTWARE'}) && $ENV{'SERVER_SOFTWARE'}=~/apache/i);
@@ -6,9 +21,9 @@ sub check_apache {
 
 sub perl_info_print_apache {
 
-	return perl_info_print_table_row(1, "<p>Unable to detect the Apache HTTP server installation</p>") unless (check_apache());
+	return unless (check_apache());
 
-	my  ($version, $major, $minor, $patch, $user, $group, $root, $mods) = ("Not detected by App::Info. See ENVs.") x 8;
+	my  ($version, $major, $minor, $patch, $user, $group, $root, @mods) = ("Not detected by App::Info. See ENVs.") x 7;
 	my $apache = App::Info::HTTPD::Apache->new;
 	if ($apache->installed) {
 		$version = $apache->version; 
@@ -18,9 +33,9 @@ sub perl_info_print_apache {
 		$user  =  $apache->user;
 		$group =  $apache->group;
 		$root  =  $apache->httpd_root;
-		$mods  =  $apache->static_mods;
+		@mods  =  $apache->static_mods;
 	} 
-				 
+
 	perl_info_print_table_row(2, "Apache Version", "$version");
 	perl_info_print_table_row(2, "Apache Major Version", "$major");
 	perl_info_print_table_row(2, "Apache Minor Version", "$minor");
@@ -28,12 +43,14 @@ sub perl_info_print_apache {
 	perl_info_print_table_row(2, "Hostname:Port", "$ENV{'SERVER_NAME'}:$ENV{'SERVER_PORT'}");
 	perl_info_print_table_row(2, "User/Group", "$user / $group");
 	perl_info_print_table_row(2, "Server Root", "$root");
-	perl_info_print_table_row(2, "Loaded Modules", "$mods");
+	($apache->installed) ?
+	perl_info_print_table_row(2, "Loaded Modules", "@mods"):
+	perl_info_print_table_row(2, "Loaded Modules", "Not detected by App::Info. See ENVs.");
 }
 
 sub perl_info_print_apache_environment {
 
-	return perl_info_print_table_row(1, "<p>Unable to detect the Apache HTTP server installation</p>") unless (check_apache());
+	return unless (check_apache());
 
 	perl_info_print_table_row(2, "DOCUMENT_ROOT", "$ENV{'DOCUMENT_ROOT'} ");
 	perl_info_print_table_row(2, "HTTP_ACCEPT", "$ENV{'HTTP_ACCEPT'} ");

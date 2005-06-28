@@ -16,6 +16,13 @@
 	  return $version;
   }
 
+  sub RELEASE {
+
+	return ($Module::CoreList::released{$]}) ? $Module::CoreList::released{$]} : "unknown";
+
+  }
+
+  
   sub ORA {
 	  local($^W) = 0;
 	  my $sock = IO::Socket::INET->new(	PeerAddr  => 'perl.oreilly.com',  
@@ -36,7 +43,8 @@
 		  print "<a href=\"http://www.perl.com/\"><img border=\"0\" src=\"";
 		  print "http://perl.oreilly.com/images/perl/sm_perl_id_313_wt.gif\" alt=\"Perl Logo\" title=\"Perl Logo\" /></a>";
 		  }
-		  printf("<h1 class=\"p\">Perl Version %s</h1>\n", PERL_VERSION());
+		  printf("<h1 class=\"p\">Perl Version %s</h1><br clear=all>Release date: %s", PERL_VERSION(), RELEASE());
+		 
 		  perl_info_print_box_end();
 
 		  perl_info_print_table_start();
@@ -44,6 +52,7 @@
 		  perl_info_print_table_row(2, "Currently running on", "$sysname $nodename $release $version $machine");
 		  perl_info_print_table_row(2, "Built for",  "$Config::Config{archname}");
 		  perl_info_print_table_row(2, "Build date",  "$Config::Config{cf_time}");
+		  
 		  perl_info_print_table_row(2, "Additional C Compiler Flags",  "$Config::Config{ccflags}");
 		  perl_info_print_table_row(2, "Optimizer/Debugger Flags",  "$Config::Config{optimize}");
 
@@ -52,7 +61,6 @@
 		  }
 
 		  perl_info_print_table_row(2, "Perl API",  "$Config::Config{api_version}");
-		  perl_info_print_table_row(2, "XS API",    "$Config::Config{xs_apiversion}");
 
 		  if ($Config{useithreads}) {
 			  perl_info_print_table_row(2, "Thread Support",  "enabled");
@@ -93,36 +101,10 @@
 		  </h1>
 END_OF_HTML
 		  perl_info_print_hr();
-                  #cinfir 83373388
-		  #my $versi = Apache::ServerUtil::server_root();
-		  #require Apache::ServerUtil;
-		  #my $r = Apache->server;
-		  #my $blah = $r->server_admin;
-		  #print "<h1>admin is: $blah - Configuration</h1>\n";
-		  SECTION("Special Variables");
-		  perl_info_print_table_start();
-		  perl_info_print_table_header(2, "Variable", "Value");
- 			perl_info_print_table_row(2, '$^H', $^H);
- 			perl_info_print_table_row(2, '$^M', $^M);
-		  	perl_info_print_table_row(2, '$BASETIME', $^T);
- 			perl_info_print_table_row(2, '$COMPILING', $^C);
-		  	perl_info_print_table_row(2, '$DEBUGGING', $^D);
-			perl_info_print_table_row(2, '$EFFECTIVE_GROUP_ID', $));
-		  	perl_info_print_table_row(2, '$EXECUTABLE_NAME', $^X);
- 			perl_info_print_table_row(2, '$FORMAT_FORMFEED', $^L); 
- 			perl_info_print_table_row(2, '$FORMAT_LINE_BREAK_CHARACTERS', $:);
- 			perl_info_print_table_row(2, '$INPLACE_EDIT', $^I);
- 			perl_info_print_table_row(2, '$INPUT_RECORD_SEPARATOR', $/);
- 			perl_info_print_table_row(2, '$OUTPUT_FIELD_SEPARATOR', $\);
-			perl_info_print_table_row(2, '$PERLDB', $^P);
- 			perl_info_print_table_row(2, '$PROCESS_ID', $$);
-  			perl_info_print_table_row(2, '$PROGRAM_NAME', File::Spec->abs2rel($0));
-			perl_info_print_table_row(2, '$REAL_GROUP_ID', $();
-		  	perl_info_print_table_row(2, '$REAL_USER_ID', $<);
- 			perl_info_print_table_row(2, '$SYSTEM_FD_MAX', $^F);
-		  perl_info_print_table_end();
+		  print "<h1>Configuration</h1>\n";
+		  perl_info_print_config(); 
 
- 		  SECTION("Bundled utilities");
+ 		  SECTION("Perl utilities");
 		  perl_info_print_table_start();
 		  perl_info_print_table_header(2, "Name", "Location");
 		  perl_info_print_table_row(2, cpan_link("h2ph"), check_path("h2ph"));
@@ -143,17 +125,9 @@ END_OF_HTML
 		  perl_info_print_table_row(2, 'sendmail_path', which("sendmail"));
 		  perl_info_print_table_end();
 
-		  SECTION("apache");
-		  perl_info_print_table_start();
-		  perl_info_print_apache();
-		  perl_info_print_table_end();
 
-		  SECTION("Apache Environment");
-		  perl_info_print_table_start();
-		  perl_info_print_table_header(2, "Variable", "Value");
-		  perl_info_print_apache_environment();
-		  perl_info_print_table_end();
-
+		  perl_info_print_httpd();
+		  
 		  SECTION("HTTP Headers Information");
 		  perl_info_print_table_start();
 		  perl_info_print_table_colspan_header(2, "HTTP Request Headers");

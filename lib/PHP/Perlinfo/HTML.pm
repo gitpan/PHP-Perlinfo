@@ -4,7 +4,7 @@ sub new {
 	my $self = {};
 	while (my($field, $val) = splice(@_, 1, 2)) {
 	if (defined $field) {  $$field = $val; }
-	else { die("$field is an invalid CSS field name");}
+	else { croak("$field is an invalid CSS field name");}
 	}
 	bless($self);          
 	return $self;
@@ -13,38 +13,48 @@ sub new {
 
 sub info_all {
 	my $meth = (caller 0)[3];
-	die("$meth does not accept a parameter") if $_[1];
+	croak("$meth does not accept a parameter") if $_[1];
 	perlinfo(INFO_ALL);    
 }
 sub info_general {
 	my $meth = (caller 0)[3];
-	die("$meth does not accept a parameter") if $_[1];
+	croak("$meth does not accept a parameter") if $_[1];
 	perlinfo(INFO_GENERAL);    
 }
 sub info_modules {
 	my $meth = (caller 0)[3];
-	die("$meth does not accept a parameter") if $_[1];
+	croak("$meth does not accept a parameter") if $_[1];
 	perlinfo(INFO_MODULES);    
 }
 sub info_credits {
 	my $meth = (caller 0)[3];
-	die("$meth does not accept a parameter") if $_[1];
+	croak("$meth does not accept a parameter") if $_[1];
 	perlinfo(INFO_CREDITS);    
+}
+sub info_config {
+	my $meth = (caller 0)[3];
+	croak("$meth does not accept a parameter") if $_[1];
+	perlinfo(INFO_CONFIG);    
+}
+sub info_apache {
+	my $meth = (caller 0)[3];
+	croak("$meth does not accept a parameter") if $_[1];
+	perlinfo(INFO_APACHE);    
 }
 sub info_variables {
 	my $meth = (caller 0)[3];
-	die("$meth does not accept a parameter") if $_[1];
+	croak("$meth does not accept a parameter") if $_[1];
 	perlinfo(INFO_VARIABLES);    
 }
 sub info_license {
 	my $meth = (caller 0)[3];
-	die("$meth does not accept a parameter") if $_[1];
+	croak("$meth does not accept a parameter") if $_[1];
 	perlinfo(INFO_LICENSE);    
 }
 
 sub vomit {
 	my $meth = (caller 1)[3];
-	die ("You did not supply a parameter to $meth");
+	croak ("You did not supply a parameter to $meth");
 }
 
 sub bg_image {

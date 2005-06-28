@@ -1,5 +1,25 @@
 Revision history for Perl extension PHP::Perlinfo.
 
+0.09  Tues June 28 2005
+	[Additions]
+	- Added release date to opening header
+	- Started using Carp::croak
+	- Module::CoreList is now a dependency
+	- Added INFO_CONFIG and INFO_APACHE options
+	- Made several additions to the MySQL section. 
+	- Created PHP::Perlinfo::MySQL file. Eventually this will be renamed.
+        - Added an 'Environment' list to INFO_VARIABLES, which shows default login ENVs. Thanks to Tilly. 
+	[Changes]
+	- Made core modules listing the default. This should dramatically speed up INFO_ALL
+	- Replaced 'Special Variables' list with 'Perl Core' list derived from config_sh. 
+	- check_apache() now returns nothing instead of a warning
+	- mod_check() now returns "yes" or "no" instead of 1 or 0  
+	- Changed the 'Environment Variables' list to read 'Perl Variables' since this heading resembles its PHP counterpart
+	- Changed 'Bundled utilities' heading to 'Perl utilities'
+	- POD update to reflect changes
+	[Bug fixes]
+	- Fixed bug with the Apache module list that would display 'ARRAY' instead of the array contents 
+
 0.08  Sun June 5 2005 
 	- Major overhaul of source code. Put sections into separate, required files. 
 	- Added apache sections 

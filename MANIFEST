@@ -11,4 +11,6 @@ lib/PHP/Perlinfo/Credits.pm
 lib/PHP/Perlinfo/Modules.pm
 lib/PHP/Perlinfo/Variables.pm
 lib/PHP/Perlinfo/General.pm
+lib/PHP/Perlinfo/MySQL.pm
+lib/PHP/Perlinfo/Config.pm
 META.yml                                 Module meta-data (added by MakeMaker)
