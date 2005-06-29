@@ -9,7 +9,7 @@ use App::Info::HTTPD::Apache;
 use CGI::Carp 'fatalsToBrowser';
 use Config qw(%Config config_sh);
 use Net::Domain qw(hostname);
-use Carp qw(croak); 
+use Carp (); 
 use Module::CoreList;
 use File::Find;
 use File::Spec;
@@ -32,7 +32,7 @@ require PHP::Perlinfo::License;
 @PHP::Perlinfo::ISA    = qw(Exporter);
 @PHP::Perlinfo::EXPORT = qw(perlinfo);
 
-$VERSION = '0.09';
+$VERSION = '0.10';
 
 # This is for modperl
 initialize_globals();
@@ -57,7 +57,7 @@ initialize_globals();
   sub perlinfo { 
 	  
 	  my $INFO = (($_[0] eq "") || ($_[0] !~ /[^\s]+/)) ? "INFO_ALL" : $_[0];
-	  croak "@_ is an invalid perlinfo() parameter"
+	  Carp::croak "@_ is an invalid perlinfo() parameter"
 	  if (($INFO !~ /INFO_ALL|INFO_GENERAL|INFO_CREDITS|INFO_CONFIG|INFO_VARIABLES|INFO_APACHE|INFO_MODULES|INFO_LICENSE/) || @_ > 1); 
 	  # Andale!  Andale!  Yee-Hah! 
 	  print "Content-type: text/html\n\n" if (defined($ENV{'SERVER_SOFTWARE'}));
@@ -80,7 +80,7 @@ PHP::Perlinfo - Clone of PHP's phpinfo function for Perl
 
 =head1 DESCRIPTION
 
-This module outputs a large amount of information (only in HTML in this release) about the current state of Perl. So far, this includes information about Perl compilation options, the Perl version, server information and environment, HTTP headers, OS version information, Perl modules, and the Perl License. 
+This module outputs a large amount of information about the current state of Perl. So far, this includes information about Perl compilation options, the Perl version, server information and environment, HTTP headers, OS version information, Perl modules, and the Perl License. 
 
 Since the module outputs HTML, you may want to use it in a CGI script, but you do not have to. Of course, some information, like HTTP headers, would not be available if you use the module at the command-line.
  
@@ -105,7 +105,7 @@ Perl license information.
 
 =item INFO_CONFIG
 
-All configuration 
+All configuration values from config_sh. Not all of the values shown in INFO_ALL.
 
 =item INFO_APACHE
 
@@ -113,7 +113,7 @@ Apache HTTP server information.
 
 =item INFO_MODULES 
 
-All installed modules, their version number and more. The default is core modules.
+All installed modules, their version number and more. INFO_ALL shows only core modules.
 
 =item INFO_VARIABLES 
 

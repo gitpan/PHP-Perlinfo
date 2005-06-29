@@ -9,15 +9,11 @@ use Test;
 BEGIN { plan tests => 1 };
 use PHP::Perlinfo;
 use IO::Scalar;
-use Module::CoreList;
 #########################
 
 # Difficult to conduct testing here due to nature of perlinfo
 
-
 ok ( test_01() );
-ok ( test_02() );
-ok ( test_03() );
 
 sub test_01 {
 
@@ -27,24 +23,3 @@ $p->bg_image("yukiko.jpg");
 return 0 if ($@);
 return 1;
 }
-
-sub test_02 {
-
-my $str;
-my $io = tie *STDOUT, 'IO::Scalar', \$str;
-print $Module::CoreList::released($]);
-undef $io;
-untie *STDOUT;
-
-}
-
-sub test_03 {
-
-my $str;
-my $io = tie *STDOUT, 'IO::Scalar', \$str;
-perlinfo(INFO_APACHE);
-undef $io;
-untie *STDOUT;
-
-}
-

@@ -1,5 +1,12 @@
 Revision history for Perl extension PHP::Perlinfo.
 
+
+0.10 Wed June 29 2005 -- Emergency release
+	[Bug fixes]
+	- Removed MySQL statements that were never used but caused warnings
+	- Fully qualified croak to avoid further warnings
+	- Fixed test script. This script needs to be improved.
+
 0.09  Tues June 28 2005
 	[Additions]
 	- Added release date to opening header
